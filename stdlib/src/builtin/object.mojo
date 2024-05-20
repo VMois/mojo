@@ -572,8 +572,8 @@ struct _ObjectImpl(CollectionElement, Stringable):
         var res = String("{")
         var print_sep = False
         for entry in ptr[].impl[].items():
-            var key = entry[0]
-            var value = entry[1]
+            var key = entry[0][]
+            var value = entry[1][]
             if print_sep:
                 res += ", "
             res += (

@@ -221,8 +221,8 @@ struct _DictEntryToTupleIter[
     alias imm_dict_lifetime = __mlir_attr[
         `#lit.lifetime.mutcast<`, dict_lifetime, `> : !lit.lifetime<1>`
     ]
-    #alias ref_type = Tuple[Reference[K, False, Self.imm_dict_lifetime], Reference[V, dict_mutability, dict_lifetime]]
-    alias ref_type = Tuple[K, V]
+    alias ref_type = Tuple[Reference[K, False, Self.imm_dict_lifetime], Reference[V, dict_mutability, dict_lifetime]]
+    #alias ref_type = Tuple[K, V]
 
     var iter: _DictEntryIter[K, V, dict_mutability, dict_lifetime]
 
@@ -231,8 +231,8 @@ struct _DictEntryToTupleIter[
 
     fn __next__(inout self) -> Self.ref_type:
         var entry_ref = self.iter.__next__()
-        #return Reference[K, False, Self.imm_dict_lifetime](entry_ref[].key), Reference[V, dict_mutability, dict_lifetime](UnsafePointer.address_of(entry_ref[].value)[])
-        return entry_ref[].key, entry_ref[].value
+        return Reference[K, False, Self.imm_dict_lifetime](entry_ref[].key), Reference[V, dict_mutability, dict_lifetime](UnsafePointer.address_of(entry_ref[].value)[])
+        #return entry_ref[].key, entry_ref[].value
 
     fn __len__(self) -> Int:
         return self.iter.__len__()
@@ -626,8 +626,8 @@ struct Dict[K: KeyElement, V: CollectionElement](
 
         var i = 0
         for kv in self.items():
-            var key = kv[0]
-            var value = kv[1]
+            var key = kv[0][]
+            var value = kv[1][]
             result += repr(key) + ": " + repr(value)
             if i < len(self) - 1:
                 result += ", "
