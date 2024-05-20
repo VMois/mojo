@@ -301,8 +301,10 @@ struct PythonObject(
         var cpython = _get_global_python_itf().cpython()
         self.py_object = cpython.PyDict_New()
         for entry in value.items():
+            var key = entry[0]
+            var value = entry[1]
             var result = cpython.PyDict_SetItem(
-                self.py_object, entry[].key.py_object, entry[].value.py_object
+                self.py_object, key.py_object, value.py_object
             )
 
     fn __copyinit__(inout self, existing: Self):

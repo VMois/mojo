@@ -572,13 +572,15 @@ struct _ObjectImpl(CollectionElement, Stringable):
         var res = String("{")
         var print_sep = False
         for entry in ptr[].impl[].items():
+            var key = entry[0]
+            var value = entry[1]
             if print_sep:
                 res += ", "
             res += (
                 "'"
-                + str(entry[].key)
+                + str(key)
                 + "' = "
-                + str(object(entry[].value.copy()))
+                + str(object(value))
             )
             print_sep = True
         res += "}"
