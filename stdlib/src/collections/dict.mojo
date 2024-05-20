@@ -202,6 +202,43 @@ struct _DictValueIter[
 
 
 @value
+struct _DictEntryToTupleIter[
+    K: KeyElement,
+    V: CollectionElement,
+    dict_mutability: Bool,
+    dict_lifetime: AnyLifetime[dict_mutability].type,
+]:
+    """Iterator over Dict value references. These are mutable if the dict
+    is mutable.
+
+    Parameters:
+        K: The key type of the elements in the dictionary.
+        V: The value type of the elements in the dictionary.
+        dict_mutability: Whether the reference to the vector is mutable.
+        dict_lifetime: The lifetime of the List
+    """
+
+    alias imm_dict_lifetime = __mlir_attr[
+        `#lit.lifetime.mutcast<`, dict_lifetime, `> : !lit.lifetime<1>`
+    ]
+    alias ref_type = Tuple[Reference[K, False, Self.imm_dict_lifetime], Reference[V, dict_mutability, dict_lifetime]]
+    #alias ref_type = Tuple[K, V]
+
+    var iter: _DictEntryIter[K, V, dict_mutability, dict_lifetime]
+
+    fn __iter__(self) -> Self:
+        return self
+
+    fn __next__(inout self) -> Self.ref_type:
+        var entry_ref = self.iter.__next__()
+        return Reference[K, False, Self.imm_dict_lifetime](entry_ref[].key), Reference[V, dict_mutability, dict_lifetime](UnsafePointer.address_of(entry_ref[].value)[])
+        #return entry_ref[].key, entry_ref[].value
+
+    fn __len__(self) -> Int:
+        return self.iter.__len__()
+
+
+@value
 struct DictEntry[K: KeyElement, V: CollectionElement](CollectionElement):
     """Store a key-value pair entry inside a dictionary.
 
@@ -588,8 +625,10 @@ struct Dict[K: KeyElement, V: CollectionElement](
         result += "{"
 
         var i = 0
-        for key_value in self.items():
-            result += repr(key_value[].key) + ": " + repr(key_value[].value)
+        for kv in self.items():
+            var key = kv[0][]
+            var value = kv[1][]
+            result += repr(key) + ": " + repr(value)
             if i < len(self) - 1:
                 result += ", "
             i += 1
@@ -734,7 +773,7 @@ struct Dict[K: KeyElement, V: CollectionElement](
 
     fn items(
         self: Reference[Self, _, _]
-    ) -> _DictEntryIter[K, V, self.is_mutable, self.lifetime]:
+    ) -> _DictEntryToTupleIter[K, V, self.is_mutable, self.lifetime]:
         """Iterate over the dict's entries as immutable references.
 
         These can't yet be unpacked like Python dict items, but you can
@@ -748,7 +787,7 @@ struct Dict[K: KeyElement, V: CollectionElement](
         Returns:
             An iterator of immutable references to the dictionary entries.
         """
-        return _DictEntryIter(0, 0, self)
+        return _DictEntryToTupleIter(_DictEntryIter(0, 0, self))
 
     fn update(inout self, other: Self, /):
         """Update the dictionary with the key/value pairs from other, overwriting existing keys.
@@ -757,7 +796,7 @@ struct Dict[K: KeyElement, V: CollectionElement](
         Args:
             other: The dictionary to update from.
         """
-        for entry in other.items():
+        for entry in _DictEntryIter(0, 0, other):
             self[entry[].key] = entry[].value
 
     fn __or__(self, other: Self) -> Self:
